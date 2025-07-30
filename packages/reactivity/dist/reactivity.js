@@ -7,30 +7,40 @@ var isObject = function(obj) {
 var activeEffect = void 0;
 var ReactiveEffect = class {
   // 默认会将fn挂载到类的实例上
-  constructor(fn) {
+  constructor(fn, schaduler) {
     this.fn = fn;
+    this.schaduler = schaduler;
     this.parent = void 0;
     this.deps = [];
+    this.active = true;
   }
   run() {
+    if (!this.active) {
+      return this.run();
+    }
     try {
-      debugger;
       parent = activeEffect;
       activeEffect = this;
+      cleanupEffect(this);
       return this.fn();
     } finally {
       activeEffect = this.parent;
     }
   }
+  stop() {
+    this.active = false;
+    cleanupEffect(this);
+  }
 };
-function effect(fn) {
-  debugger;
-  const _effect = new ReactiveEffect(fn);
+function effect(fn, option = {}) {
+  const _effect = new ReactiveEffect(fn, option);
   _effect.run();
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 var targetMap = /* @__PURE__ */ new WeakMap();
 function track(target, key) {
-  debugger;
   if (activeEffect) {
     let depsMap = targetMap.get(target);
     if (!depsMap) {
@@ -47,28 +57,38 @@ function track(target, key) {
   }
 }
 function trigger(target, key, newValue, oldValue) {
-  debugger;
   const depsMap = targetMap.get(target);
   if (!depsMap) {
     return;
   }
   const dep = depsMap.get(key);
-  dep && dep.forEach((effect2) => {
-    if (effect2 !== activeEffect) effect2.run();
+  const effects = [...dep];
+  effects && effects.forEach((effect2) => {
+    if (effect2 !== activeEffect) {
+      if (effect2.schaduler) {
+        effect2.schaduler();
+      }
+      effect2.run();
+    }
   });
 }
+var cleanupEffect = function(effect2) {
+  const { deps } = effect2;
+  for (let i = 0; i < deps.length; i++) {
+    deps[i].delete(effect2);
+  }
+  effect2.deps.length = 0;
+};
 
 // packages/reactivity/src/handler.ts
 var mutableHandlers = {
   get(target, key, receiver) {
-    debugger;
     if (key === target["is_reactive" /* ISREACTIVE */]) return true;
     console.log("be tracked");
     track(target, key);
     return Reflect.get(target, key, receiver);
   },
   set(target, key, value, receiver) {
-    debugger;
     console.log("be triggered");
     let oldValue = target[key];
     const r = Reflect.set(target, key, value, receiver);

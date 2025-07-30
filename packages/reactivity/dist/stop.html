@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { reactive, effect } from "./reactivity.js";
+      const person = {
+        name: "mdk",
+        age: 18,
+        address: "bj",
+      };
+      const personProxy = reactive(person);
+      const runner = effect(
+        () => {
+          app.innerHTML = `${personProxy.name} + ${personProxy.age} + ${personProxy.address}`;
+        },
+        {
+          schaduler: () => {
+            setTimeout(() => {
+              runner();
+            }, 1000);
+          },
+        }
+      );
+      runner.effect.stop(); // 停止effect的响应式能力，不再收集相关依赖了
+      setTimeout(() => {
+        personProxy.name = "milok";
+        personProxy.age = 21;
+        personProxy.address = "sh";
+        runner(); // forceUpdate
+      }, 1000);
+    </script>
+  </body>
+</html>
