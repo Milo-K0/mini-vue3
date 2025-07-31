@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      import { reactive, effect, watch } from "./reactivity.js";
+      const person = {
+        name: "m1",
+        age: 14,
+      };
+      const personProxy = reactive(person);
+      // 下面这种方法不常用，性能消耗较大
+      // watch(
+      //   personProxy,
+      //   (newVal, oldVal) => {
+      //     console.log("数据变化了", oldval, newVal);
+      //   },
+      //   { flush: "async" } // 默认先标记为同步，之后实现异步更新
+      // );
+      // 我们可以用函数返回值的方式监听需要监听的数据(不能直接传入数据，直接传入的数据为死值，应传入函数，每次获取数据调用函数更新)
+
+      watch(
+        () => personProxy.name,
+        (newVal, oldVal) => {
+          console.log("数据变化了", oldVal, newVal);
+        },
+        { flush: "async" }
+      );
+      personProxy.name = "mdk";
+      // watch 大部分的场景可能是，监控数据变化，变化后发送请求
+      // 模拟一个输入框的场景，百度搜索框
+      // 1 -> 发送请求 2s后才返回
+      // 2 -> 发送请求 1s后返回
+
+      // 最终以1为准，实际上应该使用2的结果
+      let timer = 3000;
+      function getData(data) {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(data);
+          }, (timer -= 1000));
+        });
+      }
+      // watch(
+      //   () => person.age,
+      //   async function (newVal) {
+      //     let r = await getData(newVal);
+      //     app.innerHTML = r;
+      //   },
+      //   { flush: "sync" }
+      // );
+
+      // 如何解决这个问题?在v2中如何解决
+      let arr = []; // 用于存储上一次的清理操作
+      watch(
+        () => personProxy.age,
+        async function (newVal, oldVal, onCleanup) {
+          // debugger;
+          // while (arr.length > 0) {
+          //   let fn = arr.shift();
+          //   fn();
+          // }
+          let flag = true;
+          onCleanup(function () {
+            // 取消操作 1. 取消操作 2. 清理 3. 屏蔽
+            flag = false;
+          });
+          let r = await getData(newVal);
+          flag && (app.innerHTML = r);
+        }
+      );
+      personProxy.age = 15;
+      personProxy.age = 16;
+    </script>
+  </body>
+</html>

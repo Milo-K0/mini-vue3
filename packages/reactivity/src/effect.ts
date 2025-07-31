@@ -1,6 +1,6 @@
 export let activeEffect = undefined;
 
-class ReactiveEffect {
+export class ReactiveEffect {
   // 默认会将fn挂载到类的实例上
   constructor(private fn, public scheduler) {}
   parent = undefined;
