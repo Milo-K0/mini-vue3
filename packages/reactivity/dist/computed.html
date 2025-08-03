@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="div"></div>
+    <script type="module">
+      import { reactive, effect, computed } from "./reactivity.js";
+
+      const name = {
+        firstName: "M",
+        lastName: "dk",
+      };
+
+      // 计算属性的应用场景，主要是根据其他数据进行衍生数据的
+      // 计算属性默认是懒执行的，如果依据的值不发生变化不会重新执行dirty缓存
+      // 计算属性的值自身无法修改
+      // 依赖的值发生变化了，后续再取值可以获得到新值
+      const fullName = computed({
+        get() {
+          console.log("getter");
+          return name.firstName + name.lastName;
+        },
+        set(val) {
+          // 改属性可以导致修改其他属性
+          console.log(val);
+        },
+      });
+      console.log(fullName.value);
+      console.log(fullName.value);
+      console.log(fullName.value);
+    </script>
+  </body>
+</html>

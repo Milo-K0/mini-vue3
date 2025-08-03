@@ -2,7 +2,7 @@ export let activeEffect = undefined;
 
 export class ReactiveEffect {
   // 默认会将fn挂载到类的实例上
-  constructor(private fn, public scheduler) {}
+  constructor(private fn, public scheduler?) {}
   parent = undefined;
   deps = [];
   active = true;
@@ -53,10 +53,14 @@ export function track(target, key) {
     if (!dep) {
       depsMap.set(key, (dep = new Set()));
     }
-    if (!dep.has(activeEffect)) {
-      dep.add(activeEffect);
-      activeEffect.deps.push(dep);
-    }
+    trackEffects(dep);
+  }
+}
+export function trackEffects(dep) {
+  let shouldTrack = !dep.has(activeEffect);
+  if (shouldTrack) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
   }
 }
 export function trigger(target, key, newValue, oldValue) {
@@ -66,6 +70,10 @@ export function trigger(target, key, newValue, oldValue) {
     return;
   }
   const dep = depsMap.get(key); // name 或者 age对应的所有effect
+  triggerEffects(dep);
+}
+
+export function triggerEffects(dep) {
   const effects = [...dep];
   effects &&
     effects.forEach((effect) => {
