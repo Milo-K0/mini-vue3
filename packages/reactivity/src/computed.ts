@@ -11,6 +11,7 @@ class ComputedRefImpl {
   public _value;
   public _dirty = true;
   public dep = new Set();
+  public __v_isRef = true; // 表示后续我们可以增加拆包的逻辑
   constructor(getter, public setter) {
     this.effect = new ReactiveEffect(getter, () => {
       triggerEffects(this.dep);
